@@ -142,7 +142,17 @@ END
 
 EXECUTE TerminateEmployee
        @EmployeeID = 6,
-       @Reason
+       @Reason = 'Unfortunate Test User'
+       
+SELECT * FROM Employees
+WHERE EmployeeID = 6
+
+-- count of employees on the provided benefit type
+
+CREATE OR ALTER PROCEDURE GetBenefitCount
+(
+
+)
 
 
 
