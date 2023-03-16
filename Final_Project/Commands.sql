@@ -151,10 +151,85 @@ WHERE EmployeeID = 6
 
 CREATE OR ALTER PROCEDURE GetBenefitCount
 (
-
+       @BenefitName VARCHAR(100)
 )
+AS
+BEGIN
+       DECLARE @BenefitID = SMALLINT
+       SET @BenefitID = 
+              (
+                     SELECT B.BenefitsID
+                     FROM Benefits as B
+                     WHERE B.BenefitDescription = @BenefitName
+              )
+       SELECT @BenefitName AS BenefitName, COUNT(ES.BenefitsID) AS BenefitCount
+       FROM EmployeeSelection AS ES
+       WHERE ES.BenefitsID = @BenefitID AND ES.StopDate IS NULL
+END
 
+EXECUTE GetBenefitCount
+       @Benefitname = 'Medical'
 
+-- General Query Statement
+
+-- Display the current employee selection with names instead of IDs
+
+SELECT CONCAT(E.FirstName, ' ', COALESCE(E.MiddleName, ' '), ' ', E.LastName) AS EmployeeName,
+       B.BenefitDescription AS BenefitName,
+       P.PlanDescription AS PlanName,
+       L.LevelDescription AS LevelName,
+       ES.StartDate AS StartDate
+FROM Employees AS E
+INNER JOIN EmployeeSelection AS ES ON E.EmployeeID = ES.EmployeeID
+INNER JOIN Benefits AS B ON ES.BenefitsID = B.BenefitsID
+INNER JOIN Plans AS P ON ES.PlanID = P.PlanID
+INNER JOIN Levels AS L ON ES.LevelID = L.LevelID
+WHERE E.TerminationDate IS NULL AND ES.StopDate IS NULL
+ORDER BY E.EmployeeID, ES.BenefitsID
+
+-- count of employees on every benefit type
+
+SELECT 'Medical' AS BenefitName, COUNT(ES.BenefitsID) AS BenefitCount
+FROM EmployeeSelection AS ES
+WHERE ES.BenefitsID = 1 AND ES.StopDate IS NULL
+UNION
+SELECT 'Dental' AS BenefitName, COUNT(ES.BenefitsID) AS BenefitCount
+FROM EmployeeSelection AS ES
+WHERE ES.BenefitsID = 2 AND ES.StopDate IS NULL
+UNION
+SELECT 'Vision' AS BenefitName, COUNT(ES.BenefitsID) AS BenefitCount
+FROM EmployeeSelection AS ES
+WHERE ES.BenefitsID = 3 AND ES.StopDate IS NULL
+UNION
+SELECT 'LTD' AS BenefitName, COUNT(ES.BenefitsID) AS BenefitCount
+FROM EmployeeSelection AS ES
+WHERE ES.BenefitsID = 4 AND ES.StopDate IS NULL
+
+-- count of employees by employer
+
+SELECT EMPL.CompanyName AS CompanyName, COUNT(E.EmployeeID) AS NumerOfEmployees
+FROM Employer AS EMPL
+INNER JOIN Employees AS E ON EMPL.EmployerID = E.EmployerID
+WHERE E.TerminationDate IS NULL
+GROUP BY CompanyName
+
+-- Lists the plans with their carrier
+
+SELECT B.BenefitDescription AS BenefitName, P.PlanDescription As PlanName, C.CarrierName
+FROM Plans AS P
+INNER JOIN Benefits AS B ON P.BenefitsID = P.BenefitsID
+INNER JOIN Carrier AS C ON C.CarrierID = P.CarrierID
+
+-- count of plans in use
+
+SELECT B.BenefitDescription AS BenefitType, P.PlanDescription AS PlanName, C.CarrierName AS CarrierName, COUNT(ES.PlanID) AS NumberEnrolled
+FROM Plans AS P
+INNER JOIN EmployeeSelection AS ES ON ES.PlanID = P.PlanID
+INNER JOIN Benefits AS B ON B.BenefitsID = ES.BenefitsID
+INNER JON Carrier AS C ON C.CarrierID = P.CarrierID
+WHERE ES.StopDate IS NULL
+GROUP BY B.BenefitDescription, P.PlanDescription, C.CarrierName
+ORDER BY BenefitType ASC
 
 
 
